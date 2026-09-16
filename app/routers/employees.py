@@ -48,12 +48,6 @@ async def put_employee(employee_id: int, employee: EmployeeUpdate, db: DbSession
 
     await check_ident(db, Branch, employee.branch_id)
 
-    # result = await db.execute(select(Employee).where(Employee.phone == employee.phone))
-    # user = result.scalars().all()
-    #
-    # if user:
-    #     raise HTTPException(409, "Employee already exists")
-
     update_data = employee.model_dump(exclude_unset=True)
 
     update_data["password"] = await get_password_hash(update_data["password"])
