@@ -10,7 +10,7 @@ class RoleCreate(RoleBase):
 class RoleUpdate(RoleBase):
     pass
 
-class RoleResponse(BaseModel):
+class GetRole(BaseModel):
     id: int
     code: str
     name: str

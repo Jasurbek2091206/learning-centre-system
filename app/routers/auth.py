@@ -4,7 +4,7 @@ from sqlalchemy import select
 from app.database.connection import DbSession
 from app.models.employees import Employee
 from app.schemas.auth import RefreshToken
-from app.utils.security import verify_password, create_access_token, craete_refresh_token, create_new_access_token
+from app.utils.security import verify_password, create_access_token, create_refresh_token, create_new_access_token
 
 router = APIRouter(tags=["Auth"], prefix="/auth")
 
@@ -21,7 +21,7 @@ async def login(db: DbSession, user_data: OAuth2PasswordRequestForm = Depends())
         raise HTTPException(401, "Phone or password incorrect")
 
     acc_token = await create_access_token(employee.id)
-    ref_token = await craete_refresh_token(employee.id)
+    ref_token = await create_refresh_token(employee.id)
 
     return {
         "access token": acc_token,

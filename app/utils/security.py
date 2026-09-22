@@ -14,6 +14,7 @@ ALGORITHM = settings.ALGORITHM
 
 pwd_context = CryptContext(schemes=["argon2"])
 
+
 async def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
@@ -29,7 +30,8 @@ async def create_access_token(user_id: str) -> str:
 
     return jwt.encode(payload, SECRET_KEY, ALGORITHM)
 
-async def craete_refresh_token(user_id: str) -> str:
+
+async def create_refresh_token(user_id: str) -> str:
     payload = {
         "user_id": user_id,
         "exp": datetime.now(timezone.utc) + timedelta(days=1),
@@ -37,6 +39,7 @@ async def craete_refresh_token(user_id: str) -> str:
     }
 
     return jwt.encode(payload, SECRET_KEY, ALGORITHM)
+
 
 async def create_new_access_token(token: str, db) -> str:
     try:
@@ -57,7 +60,9 @@ async def create_new_access_token(token: str, db) -> str:
     except JWTError:
         raise HTTPException(401, "Token invalid")
 
+
 bearer = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
 
 async def get_current_user(db: DbSession, token = Depends(bearer)):
     try:
