@@ -7,6 +7,8 @@ from app.database.base import Base
 from app.models.branches import Branch
 from app.models.rooms import Room
 from app.models.employees import Employee
+from app.models.employee_roles import EmployeeRole
+from app.models.roles import Role
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
