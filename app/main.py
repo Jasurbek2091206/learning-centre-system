@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.routers.branches import router as branch_router
 from app.routers.rooms import router as room_router
 from app.routers.employees import router as employee_router
@@ -6,6 +7,8 @@ from app.routers.auth import router as auth_router
 
 
 app = FastAPI(title="Learning Centre", docs_url="/")
+
+# cors = CORSMiddleware
 
 app.include_router(auth_router)
 app.include_router(branch_router)
