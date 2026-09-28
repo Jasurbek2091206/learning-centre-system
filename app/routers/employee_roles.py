@@ -34,7 +34,7 @@ async def post_employee_role(emp_role: EmployeeRolesCreate, db: DbSession):
     await db.commit()
     return {"msg": "Employee role created successfully"}
 
-@router.get("/", response_model=GetEmployeeRoles)
+@router.get("/", response_model=list[GetEmployeeRoles])
 async def get_emmployee_role(db: DbSession):
 
     result = await db.execute(select(EmployeeRole))

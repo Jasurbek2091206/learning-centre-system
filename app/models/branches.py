@@ -13,5 +13,5 @@ class Branch(Base):
     phone: Mapped[str] = mapped_column(String(20), nullable=False)
     city: Mapped[str] = mapped_column(String(60), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    opened_at: Mapped[date] = mapped_column(Date)
+    opened_at: Mapped[date] = mapped_column(Date, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc))

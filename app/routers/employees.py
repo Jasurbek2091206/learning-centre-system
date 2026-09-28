@@ -1,8 +1,6 @@
 from datetime import datetime, timezone
-
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
-
 from app.database.connection import DbSession
 from app.models.branches import Branch
 from app.models.employees import Employee
@@ -12,12 +10,12 @@ from app.utils.security import get_password_hash
 
 router = APIRouter(tags=["Employees"], prefix="/employees")
 
-@router.post("/", status_code=201)
+
+@router.post("/", status_code=status.HTTP_201_CREATED)
 async def post_employee(employee: EmployeeCreate, db: DbSession):
     await check_ident(db, Branch, employee.branch_id)
 
-    result = await db.execute(select(Employee).where(Employee.phone == employee.phone))
-    user = result.scalars().first()
+    user = await db.scalar(select(Employee).where(Employee.phone == employee.phone))
 
     if user:
         raise HTTPException(409, "This user already exists")
@@ -32,21 +30,26 @@ async def post_employee(employee: EmployeeCreate, db: DbSession):
 
     return "Employee created successfully"
 
+
 @router.get("/", response_model=list[GetEmployee])
 async def get_employee(db: DbSession, is_acvtive: bool = True):
 
     result = await db.execute(select(Employee).where(is_acvtive == Employee.is_active))
-
     return result.scalars().all()
 
+
 @router.put("/{employee_id}")
-async def put_employee(employee_id: int, employee: EmployeeUpdate, db: DbSession):
+async def update_employee(employee_id: int, employee: EmployeeUpdate, db: DbSession):
     emp = await check_ident(db, Employee, employee_id)
 
     if not emp.is_active:
         raise HTTPException(400, "Employee does not active")
 
     await check_ident(db, Branch, employee.branch_id)
+
+    user = await db.scalar(select(Employee).where(Employee.phone == employee.phone))
+    if user:
+        raise HTTPException(409, "Employee already exists")
 
     update_data = employee.model_dump(exclude_unset=True)
 
@@ -58,6 +61,7 @@ async def put_employee(employee_id: int, employee: EmployeeUpdate, db: DbSession
     await db.commit()
     return "Employe updated successfully"
 
+
 @router.patch("/{employee_id}")
 async def toggle_employye_status(employee_id: int, db : DbSession):
     emp = await check_ident(db, Employee, employee_id)
@@ -66,6 +70,7 @@ async def toggle_employye_status(employee_id: int, db : DbSession):
     await db.commit()
 
     return "Employee status updated successfully"
+
 
 @router.delete("/{employee_id}")
 async def delete_employee(employee_id: int, db: DbSession):

@@ -1,15 +1,17 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from app.database.connection import DbSession
 from app.models.branches import Branch
 from app.models.rooms import Room
 from app.schemas.rooms import RoomCreate, GetRoom
 from app.utils.checker import check_ident
+from app.utils.security import require_role
 
 router = APIRouter(tags=["Rooms"], prefix='/rooms')
 
 @router.post("/", status_code=201)
-async def post_room(rooms: RoomCreate, db: DbSession):
+async def post_room(rooms: RoomCreate, db: DbSession,
+                    dependencies=Depends(require_role("manager", "teacher"))):
 
     await check_ident(db, Branch, rooms.branch_id)
 

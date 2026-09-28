@@ -80,3 +80,16 @@ async def get_current_user(db: DbSession, token = Depends(bearer)):
         raise HTTPException(404, "Foydalanuvchi topilmadi")
 
     return user_data
+
+def require_role(*allowed_roles):
+    async def checker(current_user = Depends(get_current_user)):
+        user_roles = [employee_role.role.code for employee_role in current_user.employee_roles]
+
+        if not any(role in allowed_roles for role in user_roles):
+            raise HTTPException(
+                status_code=403,
+                detail="Permission denied"
+            )
+
+        return current_user
+    return checker

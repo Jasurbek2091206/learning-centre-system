@@ -1,7 +1,8 @@
 from datetime import date, datetime, timezone
 from sqlalchemy import Integer, ForeignKey, String, Date, Boolean, DateTime
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database.base import Base
+from app.models.employee_roles import EmployeeRole
 
 
 class Employee(Base):
@@ -22,4 +23,4 @@ class Employee(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now(timezone.utc))
 
-
+    employee_roles: Mapped["EmployeeRole"] = relationship("EmployeeRole", back_populates="employee")
