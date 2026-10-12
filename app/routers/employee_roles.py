@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, status, HTTPException, Depends
 from sqlalchemy import select
 from app.database.connection import DbSession
 from app.models.branches import Branch
@@ -7,11 +7,13 @@ from app.models.employees import Employee
 from app.models.roles import Role
 from app.schemas.employee_roles import EmployeeRolesCreate, GetEmployeeRoles
 from app.utils.checker import check_ident
+from app.utils.security import require_role
 
 router = APIRouter(tags=["Employee Roles"], prefix="/employee_roles")
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def post_employee_role(emp_role: EmployeeRolesCreate, db: DbSession):
+async def post_employee_role(emp_role: EmployeeRolesCreate, db: DbSession,
+                             dependencies = Depends(require_role(["admin"]))):
     result = await db.scalar(select(EmployeeRole).where(
         EmployeeRole.employee_id == emp_role.employee_id,
         EmployeeRole.branch_id == emp_role.branch_id,
@@ -35,7 +37,7 @@ async def post_employee_role(emp_role: EmployeeRolesCreate, db: DbSession):
     return {"msg": "Employee role created successfully"}
 
 @router.get("/", response_model=list[GetEmployeeRoles])
-async def get_emmployee_role(db: DbSession):
+async def get_emmployee_role(db: DbSession, dependencies = Depends(require_role(["manager", "admin"]))):
 
     result = await db.execute(select(EmployeeRole))
 

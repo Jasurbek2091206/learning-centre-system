@@ -4,14 +4,14 @@ from app.database.connection import DbSession
 from app.models.roles import Role
 from app.schemas.roles import RoleCreate, GetRole, RoleUpdate
 from app.utils.checker import check_ident
-from app.utils.security import get_current_user
+from app.utils.security import get_current_user, require_role
 
 router = APIRouter(tags=["Roles"], prefix="/roles")
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def post_role(db: DbSession, role: RoleCreate,
-                    current_user = Depends(get_current_user)):
+async def post_role(db: DbSession, role: RoleCreate, current_user = Depends(get_current_user),
+                    dependencies = Depends(require_role(["admin"]))):
 
     result = await db.scalar(select(Role).where(Role.code == role.code))
 
@@ -28,14 +28,15 @@ async def post_role(db: DbSession, role: RoleCreate,
 
 
 @router.get("/", response_model=list[GetRole])
-async def get_roles(db: DbSession):
+async def get_roles(db: DbSession, dependencies = Depends(require_role(["manager", "admin"]))):
     result = await db.execute(select(Role))
     return result.scalars().all()
 
 
 @router.put("/{role_id}")
 async def put_role(role_id: int, db: DbSession, role: RoleUpdate,
-                   current_user = Depends(get_current_user)):
+                   current_user = Depends(get_current_user),
+                   dependencies = Depends(require_role(["admin"]))):
     result = await check_ident(db, Role, role_id)
 
     code = await db.scalar(select(Role).where(Role.code == role.code))
@@ -51,7 +52,9 @@ async def put_role(role_id: int, db: DbSession, role: RoleUpdate,
 
 
 @router.delete("/{role_id}")
-async def remove_role(db: DbSession, role_id: int, current_user = Depends(get_current_user)):
+async def remove_role(db: DbSession, role_id: int,
+                      current_user = Depends(get_current_user),
+                      dependencies = Depends(require_role(["admin"]))):
 
     role = await check_ident(db, Role, role_id)
 

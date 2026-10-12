@@ -1,18 +1,19 @@
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy import select
 from app.database.connection import DbSession
 from app.models.branches import Branch
 from app.models.employees import Employee
 from app.schemas.employees import EmployeeCreate, GetEmployee, EmployeeUpdate
 from app.utils.checker import check_ident
-from app.utils.security import get_password_hash
+from app.utils.security import get_password_hash, require_role
 
 router = APIRouter(tags=["Employees"], prefix="/employees")
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def post_employee(employee: EmployeeCreate, db: DbSession):
+async def post_employee(employee: EmployeeCreate, db: DbSession,
+                        dependencies = Depends(require_role(["manager", "admin"]))):
     await check_ident(db, Branch, employee.branch_id)
 
     user = await db.scalar(select(Employee).where(Employee.phone == employee.phone))
@@ -32,14 +33,16 @@ async def post_employee(employee: EmployeeCreate, db: DbSession):
 
 
 @router.get("/", response_model=list[GetEmployee])
-async def get_employee(db: DbSession, is_acvtive: bool = True):
+async def get_employee(db: DbSession, is_acvtive: bool = True,
+                       dependencies = Depends(require_role(["admin", "manager", "teacher"]))):
 
     result = await db.execute(select(Employee).where(is_acvtive == Employee.is_active))
     return result.scalars().all()
 
 
 @router.put("/{employee_id}")
-async def update_employee(employee_id: int, employee: EmployeeUpdate, db: DbSession):
+async def update_employee(employee_id: int, employee: EmployeeUpdate, db: DbSession,
+                          dependencies = Depends(require_role(["manager", "admin"]))):
     emp = await check_ident(db, Employee, employee_id)
 
     if not emp.is_active:
@@ -63,7 +66,8 @@ async def update_employee(employee_id: int, employee: EmployeeUpdate, db: DbSess
 
 
 @router.patch("/{employee_id}")
-async def toggle_employye_status(employee_id: int, db : DbSession):
+async def toggle_employye_status(employee_id: int, db : DbSession,
+                                 dependencies = Depends(require_role(["manager", "admin"]))):
     emp = await check_ident(db, Employee, employee_id)
     emp.is_active = True
     emp.fired_at = None
@@ -73,7 +77,8 @@ async def toggle_employye_status(employee_id: int, db : DbSession):
 
 
 @router.delete("/{employee_id}")
-async def delete_employee(employee_id: int, db: DbSession):
+async def delete_employee(employee_id: int, db: DbSession,
+                          dependencies = Depends(require_role(["admin"]))):
     emp = await check_ident(db, Employee, employee_id)
 
     emp.is_active = False

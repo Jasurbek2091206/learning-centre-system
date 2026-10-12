@@ -1,15 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from app.database.connection import DbSession
 from app.models.employees import Employee
 from app.schemas.auth import RefreshToken
+from app.utils.rate_limiting import limiter
 from app.utils.security import verify_password, create_access_token, create_refresh_token, create_new_access_token
 
 router = APIRouter(tags=["Auth"], prefix="/auth")
 
 @router.post("/login", status_code=201)
-async def login(db: DbSession, user_data: OAuth2PasswordRequestForm = Depends()):
+@limiter.limit("5/minute")
+async def login(request: Request, db: DbSession, user_data: OAuth2PasswordRequestForm = Depends()):
     result = await db.execute(select(Employee). where(Employee.phone == user_data.username))
     employee = result.scalars().first()
 

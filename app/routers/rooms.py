@@ -1,16 +1,18 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select
 from app.database.connection import DbSession
 from app.models.branches import Branch
 from app.models.rooms import Room
 from app.schemas.rooms import RoomCreate, GetRoom
 from app.utils.checker import check_ident
+from app.utils.rate_limiting import limiter, get_user_id_key
 from app.utils.security import require_role
 
 router = APIRouter(tags=["Rooms"], prefix='/rooms')
 
 @router.post("/", status_code=201)
-async def post_room(rooms: RoomCreate, db: DbSession,
+@limiter.limit("5/minute", key_func=get_user_id_key)
+async def post_room(request: Request, rooms: RoomCreate, db: DbSession,
                     dependencies=Depends(require_role("manager", "teacher"))):
 
     await check_ident(db, Branch, rooms.branch_id)
@@ -34,7 +36,8 @@ async def get_rooms(db: DbSession, is_active: bool = True):
     return room
 
 @router.delete("/{room_id}")
-async def close_room(room_id: int, db: DbSession):
+async def close_room(room_id: int, db: DbSession,
+                     dependencies = Depends(require_role(["manager", "admin"]))):
 
     room = await check_ident(db, Room, room_id)
 
